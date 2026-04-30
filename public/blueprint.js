@@ -22,9 +22,9 @@ const MARKER_CATEGORIES = {
 
 // ─── Labor Rate Table: [jobType][skillLevel] = $/hr ───
 const LABOR_RATES = {
-  residential: { master: 95,  journeyman: 80,  apprentice: 55 },
-  commercial:  { master: 115, journeyman: 95,  apprentice: 65 },
-  nonprofit:   { master: 80,  journeyman: 65,  apprentice: 45 },
+  residential: { master: 145, journeyman: 125, apprentice: 100 },
+  commercial:  { master: 195, journeyman: 150, apprentice: 100 },
+  nonprofit:   { master: 125, journeyman: 100, apprentice: 100 },
 };
 
 // Active rate — updated when dropdowns change
