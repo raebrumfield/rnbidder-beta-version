@@ -20,6 +20,42 @@ const MARKER_CATEGORIES = {
   other:    { label: "Other",        color: "#9E9E9E", letter: "?" },
 };
 
+// ─── Labor Rate Table: [jobType][skillLevel] = $/hr ───
+const LABOR_RATES = {
+  residential: { master: 95,  journeyman: 80,  apprentice: 55 },
+  commercial:  { master: 115, journeyman: 95,  apprentice: 65 },
+  nonprofit:   { master: 80,  journeyman: 65,  apprentice: 45 },
+};
+
+// Active rate — updated when dropdowns change
+let activeJobType   = "residential";
+let activeSkillLevel = "journeyman";
+
+function getActiveRate() {
+  return LABOR_RATES[activeJobType]?.[activeSkillLevel] ?? 85;
+}
+
+/**
+ * Called when either the Job Type or Skill Level dropdown changes.
+ * Updates all existing line items and the default for new ones.
+ */
+function onRateChange() {
+  const jobType    = document.getElementById("jobTypeSelect")?.value;
+  const skillLevel = document.getElementById("skillLevelSelect")?.value;
+  if (jobType)    activeJobType    = jobType;
+  if (skillLevel) activeSkillLevel = skillLevel;
+
+  const rate = getActiveRate();
+
+  // Update badge display
+  const badge = document.getElementById("rateBadge");
+  if (badge) badge.textContent = "$" + rate + "/hr";
+
+  // Apply to all existing line items
+  lineItems.forEach(item => { item.laborRate = rate; });
+  renderLineItems();
+}
+
 // ─── Line Item Presets (used by both manual presets and Push to Estimator) ───
 const PRESETS = {
   panel:    { description: "200A Panel Upgrade",        qty: 1, unitCost: 850,  laborHrs: 8,    laborRate: 85 },
@@ -508,7 +544,7 @@ function pushToEstimator() {
         qty: count,
         unitCost: preset.unitCost,
         laborHrs: preset.laborHrs,
-        laborRate: preset.laborRate,
+        laborRate: getActiveRate(),
       });
     }
     added++;
@@ -527,7 +563,7 @@ function pushToEstimator() {
 function addLineItem(preset) {
   const item = preset
     ? { ...preset, _id: nextItemId++ }
-    : { description: "", qty: 1, unitCost: 0, laborHrs: 0, laborRate: 85, _id: nextItemId++ };
+    : { description: "", qty: 1, unitCost: 0, laborHrs: 0, laborRate: getActiveRate(), _id: nextItemId++ };
   lineItems.push(item);
   renderLineItems();
 }
@@ -598,12 +634,11 @@ function recalcTotals() {
     laborTotal += (item.laborHrs || 0) * (item.laborRate || 0);
   });
 
-  const subtotal = materialsTotal + laborTotal;
   const markupPct = parseFloat(document.getElementById("markupPercent").value) || 0;
   const taxPct = parseFloat(document.getElementById("taxPercent").value) || 0;
-  const markupAmt = subtotal * (markupPct / 100);
-  const taxAmt = (subtotal + markupAmt) * (taxPct / 100);
-  const grandTotal = subtotal + markupAmt + taxAmt;
+  const markupAmt = materialsTotal * (markupPct / 100);          // materials only
+  const taxAmt = (materialsTotal + markupAmt + laborTotal) * (taxPct / 100);
+  const grandTotal = materialsTotal + markupAmt + laborTotal + taxAmt;
 
   document.getElementById("materialsSubtotal").textContent = "$" + materialsTotal.toFixed(2);
   document.getElementById("laborSubtotal").textContent = "$" + laborTotal.toFixed(2);
@@ -631,12 +666,11 @@ function saveBid() {
 function collectBidData() {
   const materialsTotal = lineItems.reduce((sum, item) => sum + (item.qty || 0) * (item.unitCost || 0), 0);
   const laborTotal = lineItems.reduce((sum, item) => sum + (item.laborHrs || 0) * (item.laborRate || 0), 0);
-  const subtotal = materialsTotal + laborTotal;
   const markupPct = parseFloat(document.getElementById("markupPercent").value) || 0;
   const taxPct = parseFloat(document.getElementById("taxPercent").value) || 0;
-  const markupAmt = subtotal * (markupPct / 100);
-  const taxAmt = (subtotal + markupAmt) * (taxPct / 100);
-  const grandTotal = subtotal + markupAmt + taxAmt;
+  const markupAmt = materialsTotal * (markupPct / 100);          // materials only
+  const taxAmt = (materialsTotal + markupAmt + laborTotal) * (taxPct / 100);
+  const grandTotal = materialsTotal + markupAmt + laborTotal + taxAmt;
 
   return {
     id: currentBidId || BidStore.generateId(),
@@ -742,7 +776,7 @@ function bidToFormattedText(bid) {
   t += "-------------------------------------------\n\n";
   t += "Materials Subtotal:  $" + Number(bid.materialsSubtotal || 0).toFixed(2) + "\n";
   t += "Labor Subtotal:      $" + Number(bid.laborSubtotal || 0).toFixed(2) + "\n";
-  t += "Markup (" + (bid.markupPercent || 0) + "%):       $" + Number(bid.markupAmount || 0).toFixed(2) + "\n";
+  t += "Markup (" + (bid.markupPercent || 0) + "% on materials): $" + Number(bid.markupAmount || 0).toFixed(2) + "\n";
   t += "Tax (" + (bid.taxPercent || 0) + "%):          $" + Number(bid.taxAmount || 0).toFixed(2) + "\n";
   t += "----------------------\n";
   t += "GRAND TOTAL:         $" + Number(bid.grandTotal || 0).toFixed(2) + "\n\n";
