@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RnB Bidding Tool — Estimator</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="blueprint.css">
+  <!-- PDF.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="topnav">
+    <div class="topnav-brand">
+      <a href="landing.html" class="brand-link">
+        <span class="brand-logo">R<span class="accent">n</span>B</span>
+        <span class="brand-label">Bidding Tool</span>
+      </a>
+    </div>
+    <div class="topnav-actions">
+      <button class="btn btn-ghost" onclick="window.location.href='landing.html'">← Dashboard</button>
+      <button class="btn btn-ghost" onclick="handleLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main class="estimator-layout">
+    <!-- ══════════ Sidebar ══════════ -->
+    <aside class="estimator-sidebar">
+      <!-- Bid Details -->
+      <section class="sidebar-section">
+        <h3>Bid Details</h3>
+        <label>Bid Name
+          <input type="text" id="bidName" placeholder="e.g. Smith Residence Panel Upgrade">
+        </label>
+        <label>Customer Name
+          <input type="text" id="customerName" placeholder="Customer name">
+        </label>
+        <label>Address
+          <input type="text" id="jobAddress" placeholder="Job site address">
+        </label>
+        <label>Date
+          <input type="date" id="bidDate">
+        </label>
+      </section>
+
+      <!-- Blueprint Upload -->
+      <section class="sidebar-section">
+        <h3>Blueprint Upload</h3>
+        <div class="upload-zone" id="uploadZone">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0f3460" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p>Drop a PDF here or <strong>click to browse</strong></p>
+          <input type="file" id="pdfUpload" accept=".pdf" hidden>
+          <span class="upload-filename" id="uploadFilename"></span>
+        </div>
+      </section>
+
+      <!-- Blueprint Counter Panel (shown when PDF loaded) -->
+      <section class="sidebar-section" id="counterPanel" style="display:none;">
+        <h3>Blueprint Counter</h3>
+        <div id="counterList" class="counter-list">
+          <!-- Populated dynamically -->
+        </div>
+        <div class="counter-total" id="counterTotal">Total markers: <strong>0</strong></div>
+        <button class="btn btn-primary btn-block" onclick="pushToEstimator()">
+          📋 Push to Estimator
+        </button>
+        <button class="btn btn-outline btn-block" onclick="clearAllMarkers()">
+          🗑 Clear All Markers
+        </button>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="sidebar-section">
+        <h3>Quick Actions</h3>
+        <button class="btn btn-primary btn-block" onclick="saveBid()">💾 Save Bid</button>
+        <button class="btn btn-outline btn-block" onclick="exportCurrentBid('json')">📄 Export JSON</button>
+        <button class="btn btn-outline btn-block" onclick="exportCurrentBid('text')">📝 Export Text</button>
+        <button class="btn btn-outline btn-block" onclick="exportCurrentBid('pdf')" style="border-color:#e94560;color:#e94560;">📄 Export PDF</button>
+        <button class="btn btn-danger btn-block" onclick="clearEstimator()">🗑 Clear All</button>
+      </section>
+    </aside>
+
+    <!-- ══════════ Main Content ══════════ -->
+    <section class="estimator-main">
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabLineItems" onclick="switchTab('lineItems')">
+          📝 Line Items
+        </button>
+        <button class="tab-btn" id="tabBlueprint" onclick="switchTab('blueprint')">
+          📐 Blueprint Counter
+        </button>
+      </div>
+
+      <!-- ── TAB: Blueprint Counter ── -->
+      <div class="tab-content" id="blueprintTab" style="display:none;">
+        <!-- No-PDF placeholder -->
+        <div class="blueprint-empty" id="blueprintEmpty">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <h3>No Blueprint Loaded</h3>
+          <p>Upload a PDF using the panel on the left to start counting.</p>
+        </div>
+
+        <!-- PDF workspace (hidden until PDF loaded) -->
+        <div class="blueprint-workspace" id="blueprintWorkspace" style="display:none;">
+          <!-- Category Toolbar -->
+          <div class="marker-toolbar" id="markerToolbar">
+            <div class="toolbar-categories" id="toolbarCategories">
+              <!-- Populated by JS -->
+            </div>
+            <div class="toolbar-sep"></div>
+            <div class="toolbar-tools">
+              <button class="tool-btn" onclick="undoLastMarker()" title="Undo last marker">
+                ↩ Undo
+              </button>
+              <button class="tool-btn" onclick="clearPageMarkers()" title="Clear this page">
+                ✕ Clear Page
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Category Indicator -->
+          <div class="active-indicator" id="activeIndicator">
+            Select a category above, then click on the blueprint to mark items.
+          </div>
+
+          <!-- PDF Viewer -->
+          <div class="pdf-viewport" id="pdfViewport">
+            <div class="canvas-container" id="canvasContainer">
+              <canvas id="pdfCanvas"></canvas>
+              <canvas id="markerCanvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Page & Zoom Controls -->
+          <div class="pdf-controls">
+            <div class="page-nav">
+              <button class="ctrl-btn" onclick="prevPage()" id="prevPageBtn" disabled>◀ Prev</button>
+              <span class="page-info">
+                Page <strong id="pageNum">1</strong> of <strong id="pageTotal">1</strong>
+              </span>
+              <button class="ctrl-btn" onclick="nextPage()" id="nextPageBtn" disabled>Next ▶</button>
+            </div>
+            <div class="zoom-nav">
+              <button class="ctrl-btn" onclick="zoomOut()">−</button>
+              <span class="zoom-info" id="zoomLevel">100%</span>
+              <button class="ctrl-btn" onclick="zoomIn()">+</button>
+              <button class="ctrl-btn" onclick="fitToWidth()">Fit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: Line Items (existing) ── -->
+      <div class="tab-content" id="lineItemsTab">
+        <div class="estimator-header">
+          <h2>Line Items</h2>
+          <button class="btn btn-primary" onclick="addLineItem()">+ Add Item</button>
+        </div>
+
+        <!-- Category quick-add -->
+        <div class="category-bar">
+          <button class="cat-btn" onclick="addPreset('panel')">Panel Upgrade</button>
+          <button class="cat-btn" onclick="addPreset('outlet')">Outlet Install</button>
+          <button class="cat-btn" onclick="addPreset('switch')">Switch Install</button>
+          <button class="cat-btn" onclick="addPreset('lighting')">Lighting Fixture</button>
+          <button class="cat-btn" onclick="addPreset('circuit')">New Circuit</button>
+          <button class="cat-btn" onclick="addPreset('ev')">EV Charger</button>
+          <button class="cat-btn" onclick="addPreset('gfci')">GFCI Outlet</button>
+          <button class="cat-btn" onclick="addPreset('wire')">Wire Run</button>
+        </div>
+
+        <!-- Table of line items -->
+        <div class="table-wrap">
+          <table id="lineItemsTable">
+            <thead>
+              <tr>
+                <th class="col-desc">Description</th>
+                <th class="col-qty">Qty</th>
+                <th class="col-unit">Unit Cost</th>
+                <th class="col-labor">Labor Hrs</th>
+                <th class="col-rate">Labor Rate</th>
+                <th class="col-total">Line Total</th>
+                <th class="col-action"></th>
+              </tr>
+            </thead>
+            <tbody id="lineItemsBody">
+              <!-- Rows added dynamically -->
+            </tbody>
+          </table>
+          <div class="empty-state" id="emptyState">
+            <p>No line items yet. Click <strong>+ Add Item</strong>, use a preset above, or count from the <strong>Blueprint Counter</strong> tab.</p>
+          </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="totals-bar">
+          <div class="total-row">
+            <span>Materials Subtotal</span>
+            <span id="materialsSubtotal">$0.00</span>
+          </div>
+          <div class="total-row">
+            <span>Labor Subtotal</span>
+            <span id="laborSubtotal">$0.00</span>
+          </div>
+          <div class="total-row">
+            <label>Markup %
+              <input type="number" id="markupPercent" value="20" min="0" max="100" step="1" oninput="recalcTotals()">
+            </label>
+            <span id="markupAmount">$0.00</span>
+          </div>
+          <div class="total-row">
+            <label>Tax %
+              <input type="number" id="taxPercent" value="8.2" min="0" max="25" step="0.1" oninput="recalcTotals()">
+            </label>
+            <span id="taxAmount">$0.00</span>
+          </div>
+          <div class="total-row grand-total">
+            <span>Grand Total</span>
+            <span id="grandTotal">$0.00</span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="notes-section">
+          <label><strong>Notes / Scope of Work</strong>
+            <textarea id="bidNotes" rows="4" placeholder="Additional notes, scope details, exclusions…"></textarea>
+          </label>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="auth.js"></script>
+  <script src="bid-store.js"></script>
+  <script src="blueprint.js"></script>
+  <script src="pdf-export.js"></script>
+  <script>
+    requireAuth();
+  </script>
+</body>
+</html>

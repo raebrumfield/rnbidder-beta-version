@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RnB Bidding Tool — Saved Bids</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="topnav">
+    <div class="topnav-brand">
+      <a href="landing.html" class="brand-link">
+        <span class="brand-logo">R<span class="accent">n</span>B</span>
+        <span class="brand-label">Bidding Tool</span>
+      </a>
+    </div>
+    <div class="topnav-actions">
+      <button class="btn btn-ghost" onclick="window.location.href='landing.html'">← Dashboard</button>
+      <button class="btn btn-primary" onclick="window.location.href='blueprint.html'">+ New Bid</button>
+      <button class="btn btn-ghost" onclick="handleLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main class="bids-page">
+    <header class="bids-header">
+      <h1 id="pageTitle">Saved Bids</h1>
+      <p id="pageSubtitle">Select a bid to open, export, or delete.</p>
+    </header>
+
+    <!-- Search / Filter -->
+    <div class="bids-toolbar">
+      <input type="text" id="bidSearch" placeholder="Search bids by name or customer…" oninput="renderBidList()">
+      <select id="bidSort" onchange="renderBidList()">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="name">Name A–Z</option>
+        <option value="total-desc">Highest Total</option>
+      </select>
+    </div>
+
+    <!-- Bid Cards -->
+    <div class="bids-grid" id="bidsGrid">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="empty-state" id="noBids" style="display:none;">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+      </svg>
+      <h3>No bids found</h3>
+      <p>Create your first bid to see it here.</p>
+      <button class="btn btn-primary" onclick="window.location.href='blueprint.html'">+ Start New Bid</button>
+    </div>
+  </main>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" id="exportModal" style="display:none;">
+    <div class="modal-card">
+      <h3>Export Bid</h3>
+      <p id="exportBidName"></p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="doExport('pdf')" style="background:#e94560;border-color:#e94560;">📄 Export PDF</button>
+        <button class="btn btn-primary" onclick="doExport('json')">📄 Download JSON</button>
+        <button class="btn btn-primary" onclick="doExport('text')">📝 Download Text</button>
+        <button class="btn btn-ghost" onclick="closeExportModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="bid-store.js"></script>
+  <script src="pdf-export.js"></script>
+  <script>
+    requireAuth();
+
+    let exportTargetId = null;
+    const isExportMode = new URLSearchParams(window.location.search).get("action") === "export";
+
+    if (isExportMode) {
+      document.getElementById("pageTitle").textContent = "Export a Bid";
+      document.getElementById("pageSubtitle").textContent = "Choose a bid to download as JSON or formatted text.";
+    }
+
+    function renderBidList() {
+      const grid = document.getElementById("bidsGrid");
+      const noBids = document.getElementById("noBids");
+      const search = document.getElementById("bidSearch").value.toLowerCase();
+      const sort = document.getElementById("bidSort").value;
+
+      let bids = BidStore.list();
+
+      // Filter
+      if (search) {
+        bids = bids.filter(b =>
+          (b.name || "").toLowerCase().includes(search) ||
+          (b.customerName || "").toLowerCase().includes(search)
+        );
+      }
+
+      // Sort
+      switch (sort) {
+        case "newest":   bids.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)); break;
+        case "oldest":   bids.sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)); break;
+        case "name":     bids.sort((a, b) => (a.name || "").localeCompare(b.name || "")); break;
+        case "total-desc": bids.sort((a, b) => (b.grandTotal || 0) - (a.grandTotal || 0)); break;
+      }
+
+      if (bids.length === 0) {
+        grid.innerHTML = "";
+        noBids.style.display = "block";
+        return;
+      }
+
+      noBids.style.display = "none";
+      grid.innerHTML = bids.map(bid => {
+        const date = bid.updatedAt ? new Date(bid.updatedAt).toLocaleDateString() : "—";
+        const total = bid.grandTotal != null ? "$" + Number(bid.grandTotal).toFixed(2) : "—";
+        const items = bid.lineItems ? bid.lineItems.length : 0;
+        return `
+          <div class="bid-card">
+            <div class="bid-card-header">
+              <h3>${escapeHtml(bid.name || "Untitled Bid")}</h3>
+              <span class="bid-date">${date}</span>
+            </div>
+            <div class="bid-card-body">
+              <div class="bid-meta"><span>Customer:</span> ${escapeHtml(bid.customerName || "—")}</div>
+              <div class="bid-meta"><span>Items:</span> ${items}</div>
+              <div class="bid-meta"><span>Total:</span> <strong>${total}</strong></div>
+            </div>
+            <div class="bid-card-actions">
+              ${isExportMode
+                ? `<button class="btn btn-primary btn-sm" onclick="openExportModal('${bid.id}')">Export</button>`
+                : `<button class="btn btn-primary btn-sm" onclick="openBid('${bid.id}')">Open</button>
+                   <button class="btn btn-outline btn-sm" onclick="duplicateBid('${bid.id}')">Duplicate</button>
+                   <button class="btn btn-outline btn-sm" onclick="openExportModal('${bid.id}')">Export</button>
+                   <button class="btn btn-danger btn-sm" onclick="deleteBid('${bid.id}')">Delete</button>`
+              }
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function openBid(id) {
+      window.location.href = "blueprint.html?bid=" + id;
+    }
+
+    function duplicateBid(id) {
+      const bid = BidStore.get(id);
+      if (!bid) return;
+      const copy = JSON.parse(JSON.stringify(bid));
+      copy.id = BidStore.generateId();
+      copy.name = (copy.name || "Bid") + " (Copy)";
+      copy.createdAt = new Date().toISOString();
+      copy.updatedAt = new Date().toISOString();
+      BidStore.save(copy);
+      showToast("Bid duplicated!");
+      renderBidList();
+    }
+
+    function deleteBid(id) {
+      if (!confirm("Delete this bid? This cannot be undone.")) return;
+      BidStore.remove(id);
+      showToast("Bid deleted.");
+      renderBidList();
+    }
+
+    function openExportModal(id) {
+      exportTargetId = id;
+      const bid = BidStore.get(id);
+      document.getElementById("exportBidName").textContent = bid ? (bid.name || "Untitled Bid") : "";
+      document.getElementById("exportModal").style.display = "flex";
+    }
+
+    function closeExportModal() {
+      document.getElementById("exportModal").style.display = "none";
+      exportTargetId = null;
+    }
+
+    function doExport(format) {
+      if (!exportTargetId) return;
+      const bid = BidStore.get(exportTargetId);
+      if (!bid) return;
+
+      if (format === "pdf") {
+        closeExportModal();
+        exportBidToPDF(bid).then(() => showToast("PDF exported!")).catch(err => {
+          console.error("PDF export failed:", err);
+          showToast("PDF export failed — see console.");
+        });
+        return;
+      }
+      if (format === "json") {
+        downloadFile(JSON.stringify(bid, null, 2), (bid.name || "bid") + ".json", "application/json");
+      } else {
+        downloadFile(bidToText(bid), (bid.name || "bid") + ".txt", "text/plain");
+      }
+      closeExportModal();
+      showToast("Bid exported!");
+    }
+
+    function bidToText(bid) {
+      let text = "═══════════════════════════════════════════\n";
+      text += "  RnB HOMES ELECTRICAL — BID ESTIMATE\n";
+      text += "═══════════════════════════════════════════\n\n";
+      text += `Bid Name:     ${bid.name || "—"}\n`;
+      text += `Customer:     ${bid.customerName || "—"}\n`;
+      text += `Address:      ${bid.jobAddress || "—"}\n`;
+      text += `Date:         ${bid.bidDate || "—"}\n\n`;
+      text += "───────────────────────────────────────────\n";
+      text += "  LINE ITEMS\n";
+      text += "───────────────────────────────────────────\n\n";
+
+      if (bid.lineItems && bid.lineItems.length > 0) {
+        bid.lineItems.forEach((item, i) => {
+          const matCost = (item.qty || 0) * (item.unitCost || 0);
+          const labCost = (item.laborHrs || 0) * (item.laborRate || 0);
+          text += `${i + 1}. ${item.description || "Item"}\n`;
+          text += `   Qty: ${item.qty}  ×  $${Number(item.unitCost).toFixed(2)}  =  $${matCost.toFixed(2)} materials\n`;
+          text += `   Labor: ${item.laborHrs} hrs  ×  $${Number(item.laborRate).toFixed(2)}/hr  =  $${labCost.toFixed(2)}\n`;
+          text += `   Line Total: $${(matCost + labCost).toFixed(2)}\n\n`;
+        });
+      } else {
+        text += "(No line items)\n\n";
+      }
+
+      text += "───────────────────────────────────────────\n";
+      text += "  TOTALS\n";
+      text += "───────────────────────────────────────────\n\n";
+      text += `Materials Subtotal:  $${Number(bid.materialsSubtotal || 0).toFixed(2)}\n`;
+      text += `Labor Subtotal:      $${Number(bid.laborSubtotal || 0).toFixed(2)}\n`;
+      text += `Markup (${bid.markupPercent || 0}%):       $${Number(bid.markupAmount || 0).toFixed(2)}\n`;
+      text += `Tax (${bid.taxPercent || 0}%):          $${Number(bid.taxAmount || 0).toFixed(2)}\n`;
+      text += `──────────────────────\n`;
+      text += `GRAND TOTAL:         $${Number(bid.grandTotal || 0).toFixed(2)}\n\n`;
+
+      if (bid.notes) {
+        text += "───────────────────────────────────────────\n";
+        text += "  NOTES\n";
+        text += "───────────────────────────────────────────\n\n";
+        text += bid.notes + "\n";
+      }
+
+      text += "\n═══════════════════════════════════════════\n";
+      text += "  RnB Homes Electrical · Colorado Springs, CO\n";
+      text += "═══════════════════════════════════════════\n";
+      return text;
+    }
+
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2500);
+    }
+
+    document.addEventListener("DOMContentLoaded", renderBidList);
+  </script>
+</body>
+</html>

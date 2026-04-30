@@ -1,0 +1,405 @@
+/* ═══════════════════════════════════════════
+   RnB Bidding Tool — Shared Styles
+   ═══════════════════════════════════════════ */
+
+/* Reset & Base */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:     #0f3460;
+  --navy-light: #16213e;
+  --red:      #e94560;
+  --bg:       #f4f6f9;
+  --white:    #ffffff;
+  --gray-50:  #fafafa;
+  --gray-100: #f0f0f0;
+  --gray-200: #e0e0e0;
+  --gray-300: #ccc;
+  --gray-500: #888;
+  --gray-700: #444;
+  --gray-900: #1a1a1a;
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.1);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.15);
+  --radius:   12px;
+  --radius-sm: 8px;
+  --font:     'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+html { font-size: 16px; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--gray-900);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a { color: var(--navy); text-decoration: none; }
+a:hover { color: var(--red); }
+
+/* ─── Top Navigation ─── */
+.topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+.topnav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.brand-logo {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -1px;
+}
+.brand-logo .accent { color: var(--red); }
+.brand-label {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+.topnav-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ─── Buttons ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--navy);
+  color: var(--white);
+  border-color: var(--navy);
+}
+.btn-primary:hover { background: var(--red); border-color: var(--red); }
+.btn-outline {
+  background: transparent;
+  color: var(--navy);
+  border-color: var(--navy);
+}
+.btn-outline:hover { background: var(--navy); color: var(--white); }
+.btn-ghost {
+  background: transparent;
+  color: var(--gray-700);
+  border-color: transparent;
+  padding: 8px 14px;
+}
+.btn-ghost:hover { background: var(--gray-100); color: var(--navy); }
+.btn-danger {
+  background: transparent;
+  color: var(--red);
+  border-color: var(--red);
+}
+.btn-danger:hover { background: var(--red); color: var(--white); }
+.btn-block { width: 100%; margin-bottom: 8px; }
+.btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+
+/* ─── Landing Page ─── */
+.landing-hero {
+  text-align: center;
+  padding: 48px 24px 24px;
+}
+.landing-hero h1 {
+  font-size: 2rem;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.landing-hero p {
+  color: var(--gray-500);
+  font-size: 1.05rem;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 960px;
+  margin: 32px auto;
+  padding: 0 24px;
+}
+
+.action-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  cursor: pointer;
+  border: 2px solid var(--gray-200);
+  transition: all 0.25s ease;
+  text-align: center;
+}
+.action-card:hover {
+  border-color: var(--navy);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+.card-icon {
+  margin-bottom: 16px;
+}
+.action-card h2 {
+  font-size: 1.2rem;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.action-card p {
+  color: var(--gray-500);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+.card-action {
+  color: var(--red);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.landing-footer {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  color: var(--gray-500);
+  font-size: 0.85rem;
+}
+.stat-pill {
+  background: var(--white);
+  padding: 8px 20px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.stat-pill strong { color: var(--navy); }
+
+/* ─── Bids Page ─── */
+.bids-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+.bids-header {
+  margin-bottom: 24px;
+}
+.bids-header h1 {
+  font-size: 1.6rem;
+  color: var(--navy);
+}
+.bids-header p {
+  color: var(--gray-500);
+  font-size: 0.95rem;
+}
+
+.bids-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.bids-toolbar input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.bids-toolbar input:focus { border-color: var(--navy); }
+.bids-toolbar select {
+  padding: 10px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  background: var(--white);
+  outline: none;
+  cursor: pointer;
+}
+
+.bids-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.bid-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 2px solid var(--gray-200);
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.bid-card:hover {
+  border-color: var(--navy);
+  box-shadow: var(--shadow-sm);
+}
+.bid-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 8px;
+}
+.bid-card-header h3 {
+  font-size: 1rem;
+  color: var(--navy);
+}
+.bid-date {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+.bid-card-body {
+  padding: 4px 20px 12px;
+}
+.bid-meta {
+  font-size: 0.85rem;
+  color: var(--gray-700);
+  margin-bottom: 2px;
+}
+.bid-meta span { color: var(--gray-500); }
+.bid-meta strong { color: var(--navy); }
+.bid-card-actions {
+  display: flex;
+  gap: 6px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--gray-100);
+  background: var(--gray-50);
+}
+
+/* ─── Empty State ─── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--gray-500);
+}
+.empty-state h3 {
+  margin: 16px 0 8px;
+  color: var(--gray-700);
+}
+.empty-state .btn { margin-top: 16px; }
+
+/* ─── Modal ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.modal-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.modal-card h3 {
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.modal-card p {
+  color: var(--gray-500);
+  margin-bottom: 24px;
+}
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ─── Toast ─── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--navy);
+  color: var(--white);
+  padding: 12px 28px;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 300;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .topnav { padding: 10px 16px; }
+  .topnav-actions .btn { padding: 6px 10px; font-size: 0.8rem; }
+  .landing-hero { padding: 32px 16px 16px; }
+  .landing-hero h1 { font-size: 1.5rem; }
+  .landing-grid { padding: 0 16px; gap: 16px; }
+  .action-card { padding: 24px 20px; }
+  .bids-toolbar { flex-direction: column; }
+  .bids-grid { grid-template-columns: 1fr; }
+  .bid-card-actions { flex-wrap: wrap; }
+}
+
+/* --- Bid Type Modal Additions --- */
+#bidTypeModal {
+  display: none;
+}
+
+#bidTypeModal.active {
+  display: flex;
+}
+
+.modal-btn {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  background: #005bbb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.modal-btn:hover {
+  background: #004999;
+}
+
+.modal-close {
+  margin-top: 10px;
+  background: #ccc;
+  padding: 10px;
+  width: 100%;
+  border-radius: 6px;
+  cursor: pointer;
+}

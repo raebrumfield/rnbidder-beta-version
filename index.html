@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RnB Bidding Tool — Login</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body.login-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 48px 40px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .login-card .logo {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #0f3460;
+      margin-bottom: 4px;
+    }
+    .login-card .logo span { color: #e94560; }
+    .login-card .tagline {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 32px;
+    }
+    .login-card input[type="password"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .login-card input[type="password"]:focus {
+      border-color: #0f3460;
+    }
+    .login-card button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 16px;
+      background: #0f3460;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-card button:hover { background: #e94560; }
+    .login-card button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+    .login-error {
+      color: #e94560;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      min-height: 1.2em;
+    }
+  </style>
+</head>
+<body class="login-page">
+  <div class="login-card">
+    <div class="logo">R<span>n</span>B</div>
+    <div class="tagline">Bidding Tool — RnB Homes Electrical</div>
+    <form id="loginForm">
+      <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="current-password" required>
+      <button type="submit" id="loginBtn">Sign In</button>
+      <div class="login-error" id="loginError"></div>
+    </form>
+  </div>
+  <script src="auth.js"></script>
+  <script>
+    // If already authenticated, go straight to landing
+    if (isAuthenticated()) {
+      window.location.href = "landing.html";
+    }
+
+    const form = document.getElementById("loginForm");
+    const errorEl = document.getElementById("loginError");
+    const btn = document.getElementById("loginBtn");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorEl.textContent = "";
+      btn.disabled = true;
+      btn.textContent = "Signing in…";
+
+      const password = document.getElementById("passwordInput").value.trim();
+
+      try {
+        // Try Netlify function first, fall back to client-side check
+        let success = false;
+        try {
+          const res = await fetch("/.netlify/functions/validate-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            sessionStorage.setItem("rnb_auth", data.token);
+            success = true;
+          }
+        } catch (networkErr) {
+          // Netlify function not available (local dev) — fallback
+          if (password === "rnb2026") {
+            sessionStorage.setItem("rnb_auth", "rnb-auth-local-" + Date.now());
+            success = true;
+          }
+        }
+
+        if (success) {
+          window.location.href = "landing.html";
+        } else {
+          errorEl.textContent = "Invalid password. Please try again.";
+        }
+      } catch (err) {
+        errorEl.textContent = "Something went wrong. Please try again.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Sign In";
+      }
+    });
+  </script>
+</body>
+</html>

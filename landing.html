@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RnB Bidding Tool — Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="topnav">
+    <div class="topnav-brand">
+      <span class="brand-logo">R<span class="accent">n</span>B</span>
+      <span class="brand-label">Bidding Tool</span>
+    </div>
+    <div class="topnav-actions">
+      <button class="btn btn-ghost" onclick="handleLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- Hero / Welcome -->
+  <header class="landing-hero">
+    <h1>Welcome back, Rachel</h1>
+    <p>Manage your electrical bids — create, review, and export estimates in one place.</p>
+  </header>
+
+  <!-- Action Cards -->
+  <main class="landing-grid">
+    <!-- Start New Bid -->
+    <div class="action-card" onclick="openBidTypeModal()">
+
+      <div class="card-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0f3460" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <line x1="9" y1="15" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <h2>Start New Bid</h2>
+      <p>Upload a blueprint PDF and build a new electrical estimate from scratch.</p>
+      <span class="card-action">Open Estimator →</span>
+    </div>
+
+    <!-- Open Existing Bids -->
+    <div class="action-card" onclick="window.location.href='bids.html'">
+      <div class="card-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0f3460" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          <line x1="9" y1="14" x2="15" y2="14"/>
+        </svg>
+      </div>
+      <h2>Open Existing Bids</h2>
+      <p>Browse, edit, or duplicate previously saved bids from your local library.</p>
+      <span class="card-action">View Bids →</span>
+    </div>
+
+    <!-- Export Bid -->
+    <div class="action-card" onclick="window.location.href='bids.html?action=export'">
+      <div class="card-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0f3460" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <h2>Export Bid</h2>
+      <p>Download a completed bid as a formatted document or JSON data file.</p>
+      <span class="card-action">Choose & Export →</span>
+    </div>
+  </main>
+
+  <!-- Quick Stats Footer -->
+  <footer class="landing-footer">
+    <div class="stat-pill" id="statTotal">
+      <strong>0</strong> saved bids
+    </div>
+    <div class="stat-pill" id="statRecent">
+      Last bid: <strong>—</strong>
+    </div>
+  </footer>
+
+  <script src="auth.js"></script>
+  <script src="bid-store.js"></script>
+  <script>
+    requireAuth();
+
+    // Populate quick stats
+    document.addEventListener("DOMContentLoaded", () => {
+      const bids = BidStore.list();
+      document.querySelector("#statTotal strong").textContent = bids.length;
+      if (bids.length > 0) {
+        const latest = bids.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
+        document.querySelector("#statRecent strong").textContent = latest.name || latest.id.slice(0, 8);
+      }
+    });
+  </script>
+  <!-- Bid Type Selection Modal -->
+<div id="bidTypeModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>Select Bid Type</h2>
+
+    <button class="modal-btn" onclick="startBid('residential')">
+      Residential Bid
+    </button>
+
+    <button class="modal-btn" onclick="startBid('commercial')">
+      Commercial Bid
+    </button>
+
+    <button class="modal-btn" onclick="startBid('nonprofit')">
+      Nonprofit Bid
+    </button>
+
+    <button class="modal-close" onclick="closeBidTypeModal()">Cancel</button>
+  </div>
+</div>
+  <!-- Bid Type Selection Modal -->
+<div id="bidTypeModal" class="modal-overlay">
+  <div class="modal">
+    <h2>Select Bid Type</h2>
+
+    <button class="modal-btn" onclick="startBid('residential')">Residential Bid</button>
+    <button class="modal-btn" onclick="startBid('commercial')">Commercial Bid</button>
+    <button class="modal-btn" onclick="startBid('nonprofit')">Nonprofit Bid</button>
+
+    <button class="modal-close" onclick="closeBidTypeModal()">Cancel</button>
+  </div>
+</div>
+<!-- Bid Type Selection Modal -->
+<div id="bidTypeModal" class="modal-overlay">
+  <div class="modal">
+    <h2>Select Bid Type</h2>
+
+    <button class="modal-btn" onclick="startBid('residential')">Residential Bid</button>
+    <button class="modal-btn" onclick="startBid('commercial')">Commercial Bid</button>
+    <button class="modal-btn" onclick="startBid('nonprofit')">Nonprofit Bid</button>
+
+    <button class="modal-close" onclick="closeBidTypeModal()">Cancel</button>
+  </div>
+</div>
+<script>
+function openBidTypeModal() {
+  document.getElementById("bidTypeModal").classList.add("active");
+}
+
+function closeBidTypeModal() {
+  document.getElementById("bidTypeModal").classList.remove("active");
+}
+
+function startBid(type) {
+  localStorage.setItem("currentBidType", type);
+  window.location.href = "blueprint.html";
+}
+</script>
+
+</body>
+</html>
