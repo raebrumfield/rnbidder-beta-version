@@ -126,7 +126,7 @@ async function exportBidToPDF(bid) {
   // ──────────────────────────────
   const materialsWithMarkup = (bid.materialsSubtotal || 0) + (bid.markupAmount || 0);
   const labor = bid.laborSubtotal || 0;
-  const total = materialsWithMarkup + labor;
+  const total = materialsWithMarkup + labor + (bid.taxAmount || 0);
 
   doc.setFontSize(11);
   doc.setTextColor(50, 50, 50);
