@@ -58,16 +58,16 @@ function onRateChange() {
 
 // ─── Line Item Presets (used by both manual presets and Push to Estimator) ───
 const PRESETS = {
-  panel:    { description: "200A Panel Upgrade",        qty: 1, unitCost: 850,  laborHrs: 8,    laborRate: 85 },
-  outlet:   { description: "Standard Outlet Install",   qty: 1, unitCost: 12,   laborHrs: 0.75, laborRate: 85 },
-  switch:   { description: "Switch Install",            qty: 1, unitCost: 15,   laborHrs: 0.5,  laborRate: 85 },
-  lighting: { description: "Lighting Fixture Install",  qty: 1, unitCost: 65,   laborHrs: 1,    laborRate: 85 },
-  circuit:  { description: "New 20A Circuit Run",       qty: 1, unitCost: 45,   laborHrs: 2,    laborRate: 85 },
-  ev:       { description: "EV Charger Install (L2)",   qty: 1, unitCost: 450,  laborHrs: 4,    laborRate: 85 },
-  gfci:     { description: "GFCI Outlet Install",       qty: 1, unitCost: 22,   laborHrs: 0.75, laborRate: 85 },
-  wire:     { description: "Wire Run (per 50 ft)",      qty: 1, unitCost: 75,   laborHrs: 1.5,  laborRate: 85 },
-  jbox:     { description: "Junction Box",              qty: 1, unitCost: 18,   laborHrs: 0.5,  laborRate: 85 },
-  other:    { description: "Miscellaneous Item",        qty: 1, unitCost: 0,    laborHrs: 0,    laborRate: 85 },
+  panel:    { description: "200A Panel Upgrade",        qty: 1, unitCost: 850,  laborHrs: 8    },
+  outlet:   { description: "Standard Outlet Install",   qty: 1, unitCost: 12,   laborHrs: 0.75 },
+  switch:   { description: "Switch Install",            qty: 1, unitCost: 15,   laborHrs: 0.5  },
+  lighting: { description: "Lighting Fixture Install",  qty: 1, unitCost: 65,   laborHrs: 1    },
+  circuit:  { description: "New 20A Circuit Run",       qty: 1, unitCost: 45,   laborHrs: 2    },
+  ev:       { description: "EV Charger Install (L2)",   qty: 1, unitCost: 450,  laborHrs: 4    },
+  gfci:     { description: "GFCI Outlet Install",       qty: 1, unitCost: 22,   laborHrs: 0.75 },
+  wire:     { description: "Wire Run (per 50 ft)",      qty: 1, unitCost: 75,   laborHrs: 1.5  },
+  jbox:     { description: "Junction Box",              qty: 1, unitCost: 18,   laborHrs: 0.5  },
+  other:    { description: "Miscellaneous Item",        qty: 1, unitCost: 0,    laborHrs: 0    },
 };
 
 // ═══════════════════════════════════════════
@@ -99,6 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBidFromUrl();
   buildCategoryToolbar();
   buildCounterList();
+  onRateChange();   // sync badge + activeJobType/activeSkillLevel from dropdowns
   renderLineItems();
 });
 
@@ -570,7 +571,7 @@ function addLineItem(preset) {
 
 function addPreset(key) {
   const preset = PRESETS[key];
-  if (preset) addLineItem({ ...preset });
+  if (preset) addLineItem({ ...preset, laborRate: getActiveRate() });
 }
 
 function removeLineItem(id) {
