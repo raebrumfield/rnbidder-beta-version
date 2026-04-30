@@ -234,7 +234,7 @@
       text += "───────────────────────────────────────────\n\n";
       text += `Materials Subtotal:  $${Number(bid.materialsSubtotal || 0).toFixed(2)}\n`;
       text += `Labor Subtotal:      $${Number(bid.laborSubtotal || 0).toFixed(2)}\n`;
-      text += `Markup (${bid.markupPercent || 0}%):       $${Number(bid.markupAmount || 0).toFixed(2)}\n`;
+      text += `Markup (${bid.markupPercent || 0}% on materials): $${Number(bid.markupAmount || 0).toFixed(2)}\n`;
       text += `Tax (${bid.taxPercent || 0}%):          $${Number(bid.taxAmount || 0).toFixed(2)}\n`;
       text += `──────────────────────\n`;
       text += `GRAND TOTAL:         $${Number(bid.grandTotal || 0).toFixed(2)}\n\n`;
