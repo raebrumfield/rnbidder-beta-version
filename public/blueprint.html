@@ -29,6 +29,28 @@
   <main class="estimator-layout">
     <!-- ══════════ Sidebar ══════════ -->
     <aside class="estimator-sidebar">
+      <!-- Job Type & Skill Level -->
+      <section class="sidebar-section">
+        <h3>Labor Rate</h3>
+        <label>Job Type
+          <select id="jobTypeSelect" onchange="onRateChange()">
+            <option value="residential">Residential</option>
+            <option value="commercial">Commercial</option>
+            <option value="nonprofit">Nonprofit</option>
+          </select>
+        </label>
+        <label>Skill Level
+          <select id="skillLevelSelect" onchange="onRateChange()">
+            <option value="journeyman" selected>Journeyman</option>
+            <option value="master">Master</option>
+            <option value="apprentice">Apprentice</option>
+          </select>
+        </label>
+        <div class="rate-badge">
+          Rate: <strong id="rateBadge">$80/hr</strong>
+        </div>
+      </section>
+
       <!-- Bid Details -->
       <section class="sidebar-section">
         <h3>Bid Details</h3>
@@ -214,7 +236,7 @@
             <span id="laborSubtotal">$0.00</span>
           </div>
           <div class="total-row">
-            <label>Markup %
+            <label>Markup % <small style="font-weight:400;color:#888;">(materials only)</small>
               <input type="number" id="markupPercent" value="20" min="0" max="100" step="1" oninput="recalcTotals()">
             </label>
             <span id="markupAmount">$0.00</span>
